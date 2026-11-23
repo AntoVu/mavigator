@@ -1,8 +1,10 @@
+import { useEffect, useRef } from 'react';
+import { Platform, type View } from 'react-native';
 import { Gesture } from 'react-native-gesture-handler';
 import { useAnimatedStyle, useSharedValue, withDecay, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { computeFocalZoom, getMaxTranslate } from '@/components/map/map-geometry';
+import { computeFocalZoom, getMaxTranslate, wheelZoomFactor } from '@/components/map/map-geometry';
 import type { MapTransform } from '@/components/map/map-viewport';
 
 /** How long animateTransform's glide takes. */
@@ -213,5 +215,53 @@ export function usePanZoom({
     ],
   }));
 
-  return { panGesture, pinchGesture, animatedStyle, applyTransform, animateTransform, scale, translateX, translateY };
+  /**
+   * Desktop zoom on web: the mouse wheel, or a trackpad pinch (which browsers send as a wheel with
+   * ctrlKey), zooms about the cursor. Pass wheelRef to the map's static container View (the same box
+   * the gestures use), not the moving map. One listener is added on mount and calls the latest
+   * handler, so it always sees the current size (react-native-web drops a ref callback's cleanup,
+   * which piled up stale listeners). Last in the hook so react-hooks/immutability allows the
+   * writes above it. Not passive, so preventDefault keeps the page and the
+   * browser's own ctrl+wheel zoom out of it.
+   */
+  const wheelRef = useRef<View>(null);
+  const handleWheel = useRef<(event: WheelEvent) => void>(() => {});
+  useEffect(() => {
+    handleWheel.current = (event) => {
+      event.preventDefault();
+      const rect = (wheelRef.current as unknown as HTMLElement).getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      onGestureStart();
+      applyTransform(
+        computeFocalZoom({
+          savedScale: scale.value,
+          savedTranslateX: translateX.value,
+          savedTranslateY: translateY.value,
+          startFocalX: x,
+          startFocalY: y,
+          focalX: x,
+          focalY: y,
+          pinchScale: wheelZoomFactor(event.deltaY, event.deltaMode, event.ctrlKey),
+          baseWidth,
+          baseHeight,
+          containerWidth,
+          containerHeight,
+          minScale,
+          maxScale,
+          panSlack,
+        })
+      );
+      onGestureEnd(scale.value, translateX.value, translateY.value);
+    };
+  });
+  useEffect(() => {
+    const element = wheelRef.current as unknown as HTMLElement | null;
+    if (Platform.OS !== 'web' || !element) return;
+    const onWheel = (event: WheelEvent) => handleWheel.current(event);
+    element.addEventListener('wheel', onWheel, { passive: false });
+    return () => element.removeEventListener('wheel', onWheel);
+  }, []);
+
+  return { panGesture, pinchGesture, animatedStyle, applyTransform, animateTransform, wheelRef, scale, translateX, translateY };
 }

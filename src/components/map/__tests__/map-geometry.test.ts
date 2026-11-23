@@ -5,6 +5,7 @@ import {
   getMaxTranslate,
   MAX_SCALE,
   MIN_SCALE,
+  wheelZoomFactor,
 } from '@/components/map/map-geometry';
 import { CAMPUS_VIEWBOX } from '@/constants/campus';
 
@@ -178,5 +179,49 @@ describe('containerPointToViewBox', () => {
     });
     expect(middle.x).toBeCloseTo(CAMPUS_VIEWBOX.width / 2, 6);
     expect(middle.y).toBeCloseTo(CAMPUS_VIEWBOX.height / 2, 6);
+  });
+});
+
+describe('wheelZoomFactor', () => {
+  it('zooms in on a scroll up and out on a scroll down, by matching amounts', () => {
+    const zoomIn = wheelZoomFactor(-100, 0, false);
+    const zoomOut = wheelZoomFactor(100, 0, false);
+    expect(zoomIn).toBeGreaterThan(1);
+    expect(zoomOut).toBeLessThan(1);
+    expect(zoomIn * zoomOut).toBeCloseTo(1, 9);
+  });
+
+  it('treats a line-mode notch (Firefox) like the same distance in pixels', () => {
+    expect(wheelZoomFactor(3, 1, false)).toBeCloseTo(wheelZoomFactor(48, 0, false), 9);
+  });
+
+  it('caps one event, so a page-mode or fast flick cannot jump straight to the zoom limit', () => {
+    expect(wheelZoomFactor(1, 2, false)).toBeCloseTo(wheelZoomFactor(100, 0, false), 9);
+    expect(wheelZoomFactor(-5000, 0, false)).toBeLessThan(1.5);
+  });
+
+  it('makes a trackpad pinch (ctrlKey, small deltas) zoom about as fast as a mouse notch', () => {
+    // A pinch sends many events of a few pixels; a mouse notch is one event of ~100.
+    expect(wheelZoomFactor(-10, 0, true)).toBeGreaterThan(wheelZoomFactor(-10, 0, false));
+  });
+
+  it('feeds computeFocalZoom so the point under the cursor stays put', () => {
+    const base = { baseWidth: 1000, baseHeight: 800, containerWidth: 400, containerHeight: 400 };
+    const next = computeFocalZoom({
+      savedScale: 1,
+      savedTranslateX: 0,
+      savedTranslateY: 0,
+      startFocalX: 100,
+      startFocalY: 300,
+      focalX: 100,
+      focalY: 300,
+      pinchScale: wheelZoomFactor(-100, 0, false),
+      ...base,
+    });
+    // The map point under the cursor is the same before and after.
+    const before = containerPointToViewBox({ x: 100, y: 300, scale: 1, translateX: 0, translateY: 0, ...base });
+    const after = containerPointToViewBox({ x: 100, y: 300, ...next, ...base });
+    expect(after.x).toBeCloseTo(before.x, 6);
+    expect(after.y).toBeCloseTo(before.y, 6);
   });
 });

@@ -144,7 +144,7 @@ export function CampusMapView({
   const poiPressHandler = onSelectPoi ? handlePoiPress : undefined;
   const lotPressHandler = onSelectLot ? handleLotPress : undefined;
 
-  const { panGesture, pinchGesture, animatedStyle, applyTransform, animateTransform, scale, translateX, translateY } =
+  const { panGesture, pinchGesture, animatedStyle, applyTransform, animateTransform, wheelRef, scale, translateX, translateY } =
     usePanZoom({
       baseWidth,
       baseHeight,
@@ -217,6 +217,7 @@ export function CampusMapView({
 
   return (
     <View
+      ref={wheelRef}
       // The map's own color past its edge too, so zooming out doesn't show a frame around campus.
       style={[styles.container, { backgroundColor: theme.backgroundElement }]}
       onLayout={(event) => {
