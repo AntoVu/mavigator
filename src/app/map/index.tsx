@@ -14,6 +14,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { CAMPUS_POIS } from '@/data/campus-pois';
 import { useTheme } from '@/hooks/use-theme';
+import { PANEL_WIDTH, useWideLayout } from '@/hooks/use-wide-layout';
 import { amenityById, buildingsWith, type AmenityId } from '@/routing/amenities';
 import { dropPin } from '@/state/start-point';
 import { clearPinnedLocation, useUserLocation } from '@/state/user-location';
@@ -38,13 +39,14 @@ export default function MapScreen() {
   const userLocation = useUserLocation();
   const pinned = userLocation?.source === 'pinned';
   const { top } = useSafeAreaInsets();
+  const wide = useWideLayout();
 
   return (
     <ThemedView style={styles.container}>
       {/* The map fills the screen, status bar included; everything else floats over it. */}
       <View style={styles.content}>
         {/* Floats below the status bar like the other map chips, clear of iOS's blur under it. */}
-        <View pointerEvents="box-none" style={[styles.topBar, { top: top + OVERLAY_EDGE }]}>
+        <View pointerEvents="box-none" style={[styles.topBar, wide && styles.panel, { top: top + OVERLAY_EDGE }]}>
           <MapSearch
             onPickBuilding={(id) => {
               setFound(id);
@@ -89,7 +91,7 @@ export default function MapScreen() {
         <Tip
           id="map"
           text="Tap a building to see it and look inside. Long-press anywhere to drop a pin to start routes from."
-          style={styles.tip}
+          style={[styles.tip, wide && styles.panel]}
         />
         <View pointerEvents="box-none" style={styles.legend}>
           <MapLegend />
@@ -123,6 +125,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
     gap: Spacing.two,
   },
+  panel: { right: undefined, width: PANEL_WIDTH },
   banner: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -1,12 +1,14 @@
 import { useIsFocused } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
 import Svg, { Circle, G, Rect, Text as SvgText } from 'react-native-svg';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { BuildingFootprint } from '@/components/map/building-footprint';
+import { overlaySurface } from '@/components/map/map-legend';
+import { OVERLAY_EDGE } from '@/components/map/map-overlays';
 import { LotFootprint } from '@/components/map/lot-footprint';
 import { containerPointToViewBox, getCoverSize } from '@/components/map/map-geometry';
 import {
@@ -23,6 +25,7 @@ import { projectCoordinate, projectPath, unprojectPoint } from '@/components/map
 import { RouteOverlay } from '@/components/map/route-overlay';
 import { streetLabels } from '@/components/map/street-labels';
 import { StreetLine } from '@/components/map/street-line';
+import { ThemedText } from '@/components/themed-text';
 import { UserLocationMarker } from '@/components/map/user-location-marker';
 import { createTapGuard } from '@/components/map/tap-guard';
 import { usePanZoom } from '@/components/map/use-pan-zoom';
@@ -32,6 +35,7 @@ import { CAMPUS_LOTS } from '@/data/campus-lots';
 import { CAMPUS_POIS } from '@/data/campus-pois';
 import { CAMPUS_STREETS } from '@/data/campus-streets';
 import { useTheme } from '@/hooks/use-theme';
+import { useWideLayout } from '@/hooks/use-wide-layout';
 import { AMENITY_BADGE_COLOR } from '@/routing/amenities';
 import type { CampusLot, Coordinate, PointOfInterest } from '@/types/map';
 
@@ -98,6 +102,7 @@ export function CampusMapView({
   badges,
 }: CampusMapViewProps) {
   const theme = useTheme();
+  const wide = useWideLayout();
   const endColor = (id: string) =>
     id === routeEnds?.destination ? ROUTE_COLORS.destination : id === routeEnds?.start ? ROUTE_COLORS.start : undefined;
   const { width: windowWidth } = useWindowDimensions();
@@ -144,7 +149,7 @@ export function CampusMapView({
   const poiPressHandler = onSelectPoi ? handlePoiPress : undefined;
   const lotPressHandler = onSelectLot ? handleLotPress : undefined;
 
-  const { panGesture, pinchGesture, animatedStyle, applyTransform, animateTransform, wheelRef, scale, translateX, translateY } =
+  const { panGesture, pinchGesture, animatedStyle, applyTransform, animateTransform, wheelRef, zoomBy, scale, translateX, translateY } =
     usePanZoom({
       baseWidth,
       baseHeight,
@@ -355,9 +360,30 @@ export function CampusMapView({
         </Animated.View>
         </View>
       </GestureDetector>
+      {/* A mouse has no pinch: zoom buttons at the lower right on a wide window (the panels are on the left). */}
+      {wide ? (
+        <View style={[styles.zoom, overlaySurface(theme.backgroundElement)]}>
+          {([['Zoom in', '+', ZOOM_STEP], ['Zoom out', '−', 1 / ZOOM_STEP]] as const).map(([label, glyph, factor]) => (
+            <Pressable
+              key={label}
+              accessibilityRole="button"
+              accessibilityLabel={label}
+              onPress={() => zoomBy(factor)}
+              style={({ hovered }: { hovered?: boolean }) => [
+                styles.zoomButton,
+                hovered && { backgroundColor: theme.backgroundSelected },
+              ]}>
+              <ThemedText style={styles.zoomGlyph}>{glyph}</ThemedText>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
     </View>
   );
 }
+
+/** How much one zoom button press zooms. */
+const ZOOM_STEP = 1.5;
 
 const styles = StyleSheet.create({
   container: {
@@ -367,6 +393,15 @@ const styles = StyleSheet.create({
   gestureSurface: {
     flex: 1,
   },
+  zoom: {
+    position: 'absolute',
+    right: OVERLAY_EDGE,
+    bottom: OVERLAY_EDGE,
+    borderRadius: 22,
+    overflow: 'hidden',
+  },
+  zoomButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  zoomGlyph: { fontSize: 22, lineHeight: 26 },
   mapSurface: {
     flex: 1,
     alignItems: 'center',

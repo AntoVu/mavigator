@@ -17,6 +17,7 @@ import { NO_PERMIT, PARKING_DISCLAIMER } from '@/constants/parking-permits';
 import { Spacing } from '@/constants/theme';
 import { buildingName } from '@/data/buildings';
 import { useTheme } from '@/hooks/use-theme';
+import { PANEL_WIDTH, useWideLayout } from '@/hooks/use-wide-layout';
 import { formatDuration } from '@/routing/format';
 import { parkingTargetStore } from '@/state/parking-target';
 import { useTimeFormat } from '@/state/time-format';
@@ -54,6 +55,7 @@ export function ParkingDrawer({
   const { top } = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const [open, setOpen] = useState(false);
+  const wide = useWideLayout();
   const { target, nextClass, recommendations, note, crowdWarning } = useParkingRecommendation();
   const none = permitLabel === NO_PERMIT;
   const best = recommendations[0];
@@ -62,7 +64,7 @@ export function ParkingDrawer({
 
   return (
     <>
-      <View pointerEvents="box-none" style={[styles.passRow, { top: top + OVERLAY_EDGE }]}>
+      <View pointerEvents="box-none" style={[styles.passRow, wide && styles.panel, { top: top + OVERLAY_EDGE }]}>
         <OverlayChip
           accessibilityLabel={`Selected pass: ${permitLabel}. Tap to change it.`}
           onPress={onOpenPermit}>
@@ -190,6 +192,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: Spacing.two,
   },
+  panel: { right: undefined, width: PANEL_WIDTH },
   notice: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -9,6 +9,8 @@ import type { MapTransform } from '@/components/map/map-viewport';
 
 /** How long animateTransform's glide takes. */
 const FLY_MS = 600;
+/** A zoom button's step: quick, since it answers a click. */
+const STEP_MS = 200;
 /**
  * Letting go mid-swipe keeps the map moving and slows it to a stop, as Apple and Google Maps do.
  * Slower releases than this stop dead, so careful positioning stays put. Deceleration is
@@ -196,9 +198,9 @@ export function usePanZoom({
    * Glides to a pan/zoom (a search flying to a building), then calls `onDone` on the JS thread. It
    * also runs when a finger or a jump cuts the glide short, so whatever was waiting still happens.
    */
-  const animateTransform = (next: MapTransform, onDone: () => void) => {
+  const animateTransform = (next: MapTransform, onDone: () => void, duration = FLY_MS) => {
     endGlide();
-    const timing = { duration: FLY_MS };
+    const timing = { duration };
     savedScale.value = next.scale;
     savedTranslateX.value = next.translateX;
     savedTranslateY.value = next.translateY;
@@ -226,32 +228,31 @@ export function usePanZoom({
    */
   const wheelRef = useRef<View>(null);
   const handleWheel = useRef<(event: WheelEvent) => void>(() => {});
+  // The pan/zoom after zooming by `factor` about a container point, within the limits.
+  const zoomedAbout = (factor: number, x: number, y: number) =>
+    computeFocalZoom({
+      savedScale: scale.value,
+      savedTranslateX: translateX.value,
+      savedTranslateY: translateY.value,
+      startFocalX: x,
+      startFocalY: y,
+      focalX: x,
+      focalY: y,
+      pinchScale: factor,
+      baseWidth,
+      baseHeight,
+      containerWidth,
+      containerHeight,
+      minScale,
+      maxScale,
+      panSlack,
+    });
   useEffect(() => {
     handleWheel.current = (event) => {
       event.preventDefault();
       const rect = (wheelRef.current as unknown as HTMLElement).getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
       onGestureStart();
-      applyTransform(
-        computeFocalZoom({
-          savedScale: scale.value,
-          savedTranslateX: translateX.value,
-          savedTranslateY: translateY.value,
-          startFocalX: x,
-          startFocalY: y,
-          focalX: x,
-          focalY: y,
-          pinchScale: wheelZoomFactor(event.deltaY, event.deltaMode, event.ctrlKey),
-          baseWidth,
-          baseHeight,
-          containerWidth,
-          containerHeight,
-          minScale,
-          maxScale,
-          panSlack,
-        })
-      );
+      applyTransform(zoomedAbout(wheelZoomFactor(event.deltaY, event.deltaMode, event.ctrlKey), event.clientX - rect.left, event.clientY - rect.top));
       onGestureEnd(scale.value, translateX.value, translateY.value);
     };
   });
@@ -263,5 +264,12 @@ export function usePanZoom({
     return () => element.removeEventListener('wheel', onWheel);
   }, []);
 
-  return { panGesture, pinchGesture, animatedStyle, applyTransform, animateTransform, wheelRef, scale, translateX, translateY };
+  /** Glides in (factor > 1) or out about the middle of the view: the zoom buttons. */
+  const zoomBy = (factor: number) =>
+    animateTransform(zoomedAbout(factor, containerWidth / 2, containerHeight / 2), () =>
+      onGestureEnd(scale.value, translateX.value, translateY.value),
+      STEP_MS
+    );
+
+  return { panGesture, pinchGesture, animatedStyle, applyTransform, animateTransform, wheelRef, zoomBy, scale, translateX, translateY };
 }

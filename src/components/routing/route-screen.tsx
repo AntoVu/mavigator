@@ -19,6 +19,7 @@ import { CAMPUS_POIS } from '@/data/campus-pois';
 import { useHasHydrated } from '@/hooks/use-has-hydrated';
 import { usePlaceRoute, type RouteTarget } from '@/hooks/use-place-route';
 import { useTheme } from '@/hooks/use-theme';
+import { PANEL_WIDTH } from '@/hooks/use-wide-layout';
 import { amenityById, amenityPlace } from '@/routing/amenities';
 import { hasIndoorData } from '@/routing/campus-graph';
 import { routeDirections } from '@/routing/directions';
@@ -297,7 +298,7 @@ function summaryFor({
 const styles = StyleSheet.create({
   container: { flex: 1 },
   // Under the chips, pointing at the start chip.
-  tip: { position: 'absolute', left: OVERLAY_EDGE, right: OVERLAY_EDGE },
+  tip: { position: 'absolute', left: OVERLAY_EDGE, right: OVERLAY_EDGE, maxWidth: PANEL_WIDTH },
   topRow: {
     position: 'absolute',
     left: OVERLAY_EDGE,
