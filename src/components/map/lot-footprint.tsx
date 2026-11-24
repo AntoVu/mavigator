@@ -1,4 +1,4 @@
-import { G, Polygon, Text as SvgText } from 'react-native-svg';
+import { Circle, G, Polygon, Text as SvgText } from 'react-native-svg';
 
 import { useTheme } from '@/hooks/use-theme';
 
@@ -16,6 +16,8 @@ type LotFootprintProps = {
   color?: string;
   /** A route's start or destination: a thick outline in that color over the fill. */
   highlightColor?: string;
+  /** Too small to see or name: a dot at the center instead of the label. */
+  dot?: boolean;
   onPress?: () => void;
 };
 
@@ -25,6 +27,7 @@ export function LotFootprint({
   center,
   color,
   highlightColor,
+  dot,
   onPress,
 }: LotFootprintProps) {
   const theme = useTheme();
@@ -52,16 +55,28 @@ export function LotFootprint({
         />
       ))}
 
-      <SvgText
-        x={center.x}
-        y={center.y}
-        fontSize={6}
-        fontWeight={filled ? '600' : 'normal'}
-        fill={filled ? theme.text : theme.textSecondary}
-        textAnchor="middle"
-        alignmentBaseline="middle">
-        {label}
-      </SvgText>
+      {dot ? (
+        <Circle
+          cx={center.x}
+          cy={center.y}
+          r={3}
+          fill={shapeColor}
+          fillOpacity={filled ? 0.9 : 0.5}
+          stroke={highlightColor ?? theme.background}
+          strokeWidth={highlightColor ? 1.5 : 0.75}
+        />
+      ) : (
+        <SvgText
+          x={center.x}
+          y={center.y}
+          fontSize={6}
+          fontWeight={filled ? '600' : 'normal'}
+          fill={filled ? theme.text : theme.textSecondary}
+          textAnchor="middle"
+          alignmentBaseline="middle">
+          {label}
+        </SvgText>
+      )}
     </G>
   );
 }

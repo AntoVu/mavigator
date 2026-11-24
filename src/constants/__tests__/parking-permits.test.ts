@@ -42,8 +42,17 @@ const RESIDENT_WEST_LOTS = [L.lotMR, L.lotWC];
 const RESIDENT_EAST_LOTS = [L.lotCN, L.lotCS, L.kcResidentStrip];
 const RESIDENT_SOUTH_LOTS = [L.centennialCourt, L.heightsOnPecan];
 const RESIDENT_LOTS = [...RESIDENT_WEST_LOTS, ...RESIDENT_EAST_LOTS, ...RESIDENT_SOUTH_LOTS];
+const MOTORCYCLE_LOTS = [
+  L.motorcycleMeadowRun,
+  L.motorcycleF8,
+  L.motorcycleF9,
+  L.motorcycleTrimbleHall,
+  L.motorcycleEngineeringLab,
+  L.motorcycleF38,
+  L.motorcycleMaverickHall,
+];
 // Closed after hours to anyone without their own pass.
-const CLOSED_AFTER_HOURS = [L.maverickGarage, L.centennialCourt, L.heightsOnPecan];
+const CLOSED_AFTER_HOURS = [L.maverickGarage, L.centennialCourt, L.heightsOnPecan, ...MOTORCYCLE_LOTS];
 const ALL_LOTS = Object.values(L);
 const OPEN_AFTER_HOURS = ALL_LOTS.filter((lotId) => !CLOSED_AFTER_HOURS.includes(lotId as never));
 
@@ -70,6 +79,7 @@ describe('parking permit choices', () => {
       ['Resident', ['Resident West', 'Resident East', 'Resident South', 'Resident Dual']],
       ['Short-term and visitor', ['Student Short-Term', 'Visitor', 'Visitor Garage']],
       ['Employee', ['Faculty/Staff']],
+      ['Motorcycle', ['Motorcycle']],
     ]);
   });
 
@@ -323,6 +333,38 @@ describe('getParkingPermission: after hours', () => {
   it('opens up at exactly 7 PM', () => {
     expect(getParkingPermission('West Commuter', L.lotF14, new Date(2026, 8, 21, 18, 59))).toBe('restricted');
     expect(getParkingPermission('West Commuter', L.lotF14, new Date(2026, 8, 21, 19, 0))).toBe('allowed');
+  });
+});
+
+describe('getParkingPermission: Motorcycle', () => {
+  const WEEKDAY_5PM = new Date(2026, 8, 21, 17, 0);
+
+  it('draws every motorcycle area on the map', () => {
+    const drawn = new Set(CAMPUS_LOTS.map((lot) => lot.id));
+    expect(MOTORCYCLE_LOTS.filter((lotId) => !drawn.has(lotId))).toEqual([]);
+  });
+
+  it('parks only in motorcycle stalls on a weekday until 5 PM', () => {
+    for (const now of [WEEKDAY_MORNING, WEEKDAY_AFTERNOON, new Date(2026, 8, 21, 16, 59)]) {
+      expect(permissionsFor('Motorcycle', MOTORCYCLE_LOTS, now)).toEqual(['allowed']);
+      expect(permissionsFor('Motorcycle', without(ALL_LOTS, MOTORCYCLE_LOTS), now)).toEqual(['restricted']);
+    }
+  });
+
+  it('may use the commuter, staff and general lots from 5 PM and on weekends', () => {
+    for (const now of [WEEKDAY_5PM, WEEKDAY_EVENING, SATURDAY, SUNDAY]) {
+      expect(permissionsFor('Motorcycle', [...OPEN_AFTER_HOURS, ...MOTORCYCLE_LOTS], now)).toEqual(['allowed']);
+    }
+    expect(lotStatus('Motorcycle', L.lotF14, WEEKDAY_MORNING)).toBe('Not with your pass until 5 PM.');
+  });
+
+  it('keeps every other pass out of the motorcycle stalls, at every hour', () => {
+    for (const permit of PARKING_PERMITS.filter((p) => p !== 'Motorcycle')) {
+      for (const now of [WEEKDAY_MORNING, WEEKDAY_EVENING, SUNDAY]) {
+        expect([permit, permissionsFor(permit, MOTORCYCLE_LOTS, now)]).toEqual([permit, ['restricted']]);
+      }
+    }
+    expect(lotStatus('West Commuter', L.motorcycleF9, SUNDAY)).toBe("Your pass can't park here.");
   });
 });
 

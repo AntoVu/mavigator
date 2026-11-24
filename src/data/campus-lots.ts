@@ -1454,4 +1454,115 @@ export const CAMPUS_LOTS: CampusLot[] = [
       ],
     ],
   },
+  {
+    id: 'lot-motorcycle-meadow-run',
+    label: 'Motorcycle (Meadow Run)',
+    coordinate: { lat: 32.73129, lng: -97.120629 },
+    footprints: [
+      [
+        { lat: 32.731315, lng: -97.120655 },
+        { lat: 32.731265, lng: -97.120656 },
+        { lat: 32.731264, lng: -97.120602 },
+        { lat: 32.731314, lng: -97.120601 },
+      ],
+    ],
+  },
+  {
+    id: 'lot-motorcycle-f8',
+    label: 'Motorcycle (Lot F8)',
+    coordinate: { lat: 32.730875, lng: -97.116569 },
+    footprints: [
+      [
+        { lat: 32.730872, lng: -97.116595 },
+        { lat: 32.730857, lng: -97.116588 },
+        { lat: 32.730879, lng: -97.116544 },
+        { lat: 32.730894, lng: -97.116549 },
+      ],
+    ],
+  },
+  {
+    id: 'lot-motorcycle-f9',
+    label: 'Motorcycle (Lot F9)',
+    coordinate: { lat: 32.72921, lng: -97.116064 },
+    labelAt: { lat: 32.729215, lng: -97.116169 },
+    footprints: [
+      [
+        { lat: 32.729205, lng: -97.115979 },
+        { lat: 32.729184, lng: -97.11595 },
+        { lat: 32.7292, lng: -97.115933 },
+        { lat: 32.729221, lng: -97.115962 },
+      ],
+      [
+        { lat: 32.729198, lng: -97.116169 },
+        { lat: 32.729222, lng: -97.116144 },
+        { lat: 32.729237, lng: -97.116164 },
+        { lat: 32.729212, lng: -97.11619 },
+      ],
+    ],
+  },
+  {
+    id: 'lot-motorcycle-trimble-hall',
+    label: 'Motorcycle (Trimble Hall)',
+    coordinate: { lat: 32.729595, lng: -97.11202 },
+    labelAt: { lat: 32.729562, lng: -97.112028 },
+    footprints: [
+      [
+        { lat: 32.729565, lng: -97.112075 },
+        { lat: 32.72964, lng: -97.112074 },
+        { lat: 32.729641, lng: -97.1121 },
+        { lat: 32.729565, lng: -97.112102 },
+      ],
+      [
+        { lat: 32.729565, lng: -97.111911 },
+        { lat: 32.729564, lng: -97.111838 },
+        { lat: 32.729579, lng: -97.111837 },
+        { lat: 32.729579, lng: -97.111911 },
+      ],
+      [
+        { lat: 32.729639, lng: -97.112042 },
+        { lat: 32.729558, lng: -97.112042 },
+        { lat: 32.729558, lng: -97.112014 },
+        { lat: 32.729639, lng: -97.112014 },
+      ],
+    ],
+  },
+  {
+    id: 'lot-motorcycle-engineering-lab',
+    label: 'Motorcycle (Engineering Lab)',
+    coordinate: { lat: 32.732383, lng: -97.112114 },
+    footprints: [
+      [
+        { lat: 32.732397, lng: -97.11213 },
+        { lat: 32.732397, lng: -97.112098 },
+        { lat: 32.73237, lng: -97.112098 },
+        { lat: 32.73237, lng: -97.11213 },
+      ],
+    ],
+  },
+  {
+    id: 'lot-motorcycle-f38',
+    label: 'Motorcycle (Lot F38)',
+    coordinate: { lat: 32.733079, lng: -97.109744 },
+    footprints: [
+      [
+        { lat: 32.733065, lng: -97.109769 },
+        { lat: 32.733065, lng: -97.10972 },
+        { lat: 32.733093, lng: -97.10972 },
+        { lat: 32.733093, lng: -97.109769 },
+      ],
+    ],
+  },
+  {
+    id: 'lot-motorcycle-maverick-hall',
+    label: 'Motorcycle (Maverick Hall)',
+    coordinate: { lat: 32.733472, lng: -97.117952 },
+    footprints: [
+      [
+        { lat: 32.73349, lng: -97.117936 },
+        { lat: 32.733491, lng: -97.117967 },
+        { lat: 32.733453, lng: -97.117968 },
+        { lat: 32.733453, lng: -97.117937 },
+      ],
+    ],
+  },
 ];

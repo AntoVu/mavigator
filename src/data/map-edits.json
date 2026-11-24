@@ -7467,6 +7467,246 @@
      0.566974
     ]
    ]
+  },
+  {
+   "key": "lot-motorcycle-meadow-run-1",
+   "kind": "lot",
+   "name": "Motorcycle (Meadow Run)",
+   "lotId": "lot-motorcycle-meadow-run",
+   "points": [
+    {
+     "lat": 32.7313149,
+     "lng": -97.1206555
+    },
+    {
+     "lat": 32.7312647,
+     "lng": -97.1206562
+    },
+    {
+     "lat": 32.7312642,
+     "lng": -97.1206017
+    },
+    {
+     "lat": 32.7313144,
+     "lng": -97.120601
+    }
+   ]
+  },
+  {
+   "key": "lot-motorcycle-f8-1",
+   "kind": "lot",
+   "name": "Motorcycle (Lot F8)",
+   "lotId": "lot-motorcycle-f8",
+   "points": [
+    {
+     "lat": 32.7308717,
+     "lng": -97.1165952
+    },
+    {
+     "lat": 32.7308569,
+     "lng": -97.1165882
+    },
+    {
+     "lat": 32.7308786,
+     "lng": -97.1165438
+    },
+    {
+     "lat": 32.7308945,
+     "lng": -97.1165487
+    }
+   ]
+  },
+  {
+   "key": "lot-motorcycle-f9-1",
+   "kind": "lot",
+   "name": "Motorcycle (Lot F9)",
+   "lotId": "lot-motorcycle-f9",
+   "points": [
+    {
+     "lat": 32.7292052,
+     "lng": -97.1159788
+    },
+    {
+     "lat": 32.7291837,
+     "lng": -97.1159501
+    },
+    {
+     "lat": 32.7291998,
+     "lng": -97.115933
+    },
+    {
+     "lat": 32.7292213,
+     "lng": -97.1159618
+    }
+   ]
+  },
+  {
+   "key": "lot-motorcycle-f9-2",
+   "kind": "lot",
+   "name": "Motorcycle (Lot F9)",
+   "lotId": "lot-motorcycle-f9",
+   "points": [
+    {
+     "lat": 32.7291976,
+     "lng": -97.1161695
+    },
+    {
+     "lat": 32.7292224,
+     "lng": -97.1161441
+    },
+    {
+     "lat": 32.7292371,
+     "lng": -97.1161643
+    },
+    {
+     "lat": 32.7292123,
+     "lng": -97.1161898
+    }
+   ]
+  },
+  {
+   "key": "lot-motorcycle-trimble-hall-1",
+   "kind": "lot",
+   "name": "Motorcycle (Trimble Hall)",
+   "lotId": "lot-motorcycle-trimble-hall",
+   "points": [
+    {
+     "lat": 32.7295647,
+     "lng": -97.112075
+    },
+    {
+     "lat": 32.7296402,
+     "lng": -97.1120737
+    },
+    {
+     "lat": 32.7296406,
+     "lng": -97.1121004
+    },
+    {
+     "lat": 32.729565,
+     "lng": -97.1121017
+    }
+   ]
+  },
+  {
+   "key": "lot-motorcycle-trimble-hall-2",
+   "kind": "lot",
+   "name": "Motorcycle (Trimble Hall)",
+   "lotId": "lot-motorcycle-trimble-hall",
+   "points": [
+    {
+     "lat": 32.7295646,
+     "lng": -97.1119113
+    },
+    {
+     "lat": 32.7295643,
+     "lng": -97.1118376
+    },
+    {
+     "lat": 32.7295787,
+     "lng": -97.1118375
+    },
+    {
+     "lat": 32.7295789,
+     "lng": -97.1119112
+    }
+   ]
+  },
+  {
+   "key": "lot-motorcycle-trimble-hall-3",
+   "kind": "lot",
+   "name": "Motorcycle (Trimble Hall)",
+   "lotId": "lot-motorcycle-trimble-hall",
+   "points": [
+    {
+     "lat": 32.7296395,
+     "lng": -97.1120417
+    },
+    {
+     "lat": 32.7295576,
+     "lng": -97.1120417
+    },
+    {
+     "lat": 32.7295576,
+     "lng": -97.1120139
+    },
+    {
+     "lat": 32.7296395,
+     "lng": -97.1120139
+    }
+   ]
+  },
+  {
+   "key": "lot-motorcycle-engineering-lab-1",
+   "kind": "lot",
+   "name": "Motorcycle (Engineering Lab)",
+   "lotId": "lot-motorcycle-engineering-lab",
+   "points": [
+    {
+     "lat": 32.7323966,
+     "lng": -97.11213
+    },
+    {
+     "lat": 32.7323966,
+     "lng": -97.112098
+    },
+    {
+     "lat": 32.7323696,
+     "lng": -97.112098
+    },
+    {
+     "lat": 32.7323696,
+     "lng": -97.11213
+    }
+   ]
+  },
+  {
+   "key": "lot-motorcycle-f38-1",
+   "kind": "lot",
+   "name": "Motorcycle (Lot F38)",
+   "lotId": "lot-motorcycle-f38",
+   "points": [
+    {
+     "lat": 32.7330646,
+     "lng": -97.1097692
+    },
+    {
+     "lat": 32.7330646,
+     "lng": -97.1097196
+    },
+    {
+     "lat": 32.7330934,
+     "lng": -97.1097196
+    },
+    {
+     "lat": 32.7330934,
+     "lng": -97.1097692
+    }
+   ]
+  },
+  {
+   "key": "lot-motorcycle-maverick-hall-1",
+   "kind": "lot",
+   "name": "Motorcycle (Maverick Hall)",
+   "lotId": "lot-motorcycle-maverick-hall",
+   "points": [
+    {
+     "lat": 32.7334904,
+     "lng": -97.117936
+    },
+    {
+     "lat": 32.733491,
+     "lng": -97.1179668
+    },
+    {
+     "lat": 32.7334532,
+     "lng": -97.1179678
+    },
+    {
+     "lat": 32.7334526,
+     "lng": -97.117937
+    }
+   ]
   }
  ]
 }

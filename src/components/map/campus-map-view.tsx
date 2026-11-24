@@ -27,6 +27,7 @@ import { UserLocationMarker } from '@/components/map/user-location-marker';
 import { createTapGuard } from '@/components/map/tap-guard';
 import { usePanZoom } from '@/components/map/use-pan-zoom';
 import { CAMPUS_CORE_POI_IDS, CAMPUS_VIEWBOX } from '@/constants/campus';
+import { isMotorcycleStall } from '@/constants/parking-permits';
 import { ROUTE_COLORS } from '@/constants/routing';
 import { CAMPUS_LOTS } from '@/data/campus-lots';
 import { CAMPUS_POIS } from '@/data/campus-pois';
@@ -257,6 +258,7 @@ export function CampusMapView({
                 center={projectCoordinate(lot.labelAt ?? lot.coordinate)}
                 color={getLotColor?.(lot)}
                 highlightColor={endColor(lot.id)}
+                dot={isMotorcycleStall(lot.id)}
                 onPress={lotPressHandler ? () => lotPressHandler(lot) : undefined}
               />
             ))}
