@@ -73,7 +73,7 @@ export default function TabLayout() {
     // Required by react-native-gesture-handler (used by the Map tab's pan/zoom)
     // on Android and web; harmless everywhere else.
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <ThemeProvider value={colorScheme === 'dark' ? NAV_DARK : NAV_LIGHT}>
         <ScheduleProvider>
           <AnimatedSplashOverlay />
           <AppTabs />
@@ -83,3 +83,8 @@ export default function TabLayout() {
     </GestureHandlerRootView>
   );
 }
+
+// React Navigation's themes with the app's page color behind screens, not its stock gray: it shows
+// beside pages capped to a readable width on a wide window (settings/_layout.tsx).
+const NAV_LIGHT = { ...DefaultTheme, colors: { ...DefaultTheme.colors, background: Colors.light.background } };
+const NAV_DARK = { ...DarkTheme, colors: { ...DarkTheme.colors, background: Colors.dark.background } };

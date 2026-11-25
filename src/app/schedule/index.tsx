@@ -13,6 +13,7 @@ import { Spacing } from '@/constants/theme';
 import { meetsOn, useSchedule, WEEKDAY_NAMES } from '@/context/schedule-context';
 import { useHasHydrated } from '@/hooks/use-has-hydrated';
 import { useTheme } from '@/hooks/use-theme';
+import { CONTENT_MAX_WIDTH } from '@/hooks/use-wide-layout';
 import type { ScheduleClass } from '@/types/schedule';
 import { RIPPLE } from '@/components/ui/ripple';
 
@@ -180,6 +181,9 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+    width: '100%',
+    maxWidth: CONTENT_MAX_WIDTH,
+    alignSelf: 'center',
     paddingTop: Spacing.three,
   },
   // One row, always: wrapping made the actions jump as "Delete (n)" changed width. On a very narrow
@@ -231,7 +235,7 @@ const styles = StyleSheet.create({
   addPlaceholder: {
     minHeight: 64,
     borderRadius: Spacing.three,
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',

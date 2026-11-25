@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'rea
 import { MAP_OVERLAY_BOTTOM, overlaySurface } from '@/components/map/map-legend';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { PANEL_WIDTH, useWideLayout } from '@/hooks/use-wide-layout';
 
 /** How far floating controls sit from the screen's edges (and below the status bar). */
 export const OVERLAY_EDGE = 12;
@@ -60,9 +61,10 @@ export function MapDrawer({
   children?: ReactNode;
 }) {
   const theme = useTheme();
+  const wide = useWideLayout();
   // ponytail: tap to open only; add a drag gesture if people try to drag it.
   return (
-    <View style={[styles.drawer, overlaySurface(theme.backgroundElement)]}>
+    <View style={[styles.drawer, wide && styles.drawerWide, overlaySurface(theme.backgroundElement)]}>
       {above ? (
         <View pointerEvents="box-none" style={styles.above}>
           {above}
@@ -99,6 +101,14 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     paddingHorizontal: Spacing.three,
     paddingBottom: OVERLAY_EDGE,
+  },
+  // A wide window has room beside the map's middle: a panel at the lower left, rounded all round.
+  drawerWide: {
+    left: OVERLAY_EDGE,
+    right: undefined,
+    bottom: OVERLAY_EDGE,
+    width: PANEL_WIDTH,
+    borderRadius: 20,
   },
   above: {
     position: 'absolute',

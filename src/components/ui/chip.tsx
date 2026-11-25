@@ -42,6 +42,6 @@ export function Chip({
 }
 
 const styles = StyleSheet.create({
-  chip: { borderWidth: 1.5, paddingHorizontal: Spacing.two + 2, paddingVertical: Spacing.one + 1, borderRadius: 16 },
+  chip: { borderWidth: 2, paddingHorizontal: Spacing.two + 2, paddingVertical: Spacing.one + 1, borderRadius: 16 },
   dimmed: { opacity: 0.5 },
 });

@@ -156,3 +156,20 @@ export function containerPointToViewBox(input: ContainerPointInput) {
       CAMPUS_VIEWBOX.height / 2,
   };
 }
+
+/** Pixels per wheel "line" (Firefox reports lines) and the most one event may count, in pixels. */
+const WHEEL_LINE_PX = 16;
+const WHEEL_MAX_PX = 100;
+/** How much zoom a pixel of wheel buys; a trackpad pinch (ctrlKey) sends small deltas, so it gets more. */
+const WHEEL_ZOOM_PER_PX = 0.002;
+const PINCH_ZOOM_PER_PX = 0.01;
+
+/**
+ * The zoom factor for one desktop wheel event (WheelEvent's deltaY/deltaMode/ctrlKey), for
+ * computeFocalZoom's pinchScale: above 1 zooms in. Exponential, so up then down returns to the start.
+ */
+export function wheelZoomFactor(deltaY: number, deltaMode: number, ctrlKey: boolean) {
+  const px = deltaMode === 0 ? deltaY : deltaMode === 1 ? deltaY * WHEEL_LINE_PX : Math.sign(deltaY) * WHEEL_MAX_PX;
+  const capped = Math.min(Math.max(px, -WHEEL_MAX_PX), WHEEL_MAX_PX);
+  return Math.exp(-capped * (ctrlKey ? PINCH_ZOOM_PER_PX : WHEEL_ZOOM_PER_PX));
+}

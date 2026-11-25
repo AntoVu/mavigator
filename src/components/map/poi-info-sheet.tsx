@@ -29,6 +29,7 @@ import { withOpacity } from '@/constants/schedule';
 import { Spacing } from '@/constants/theme';
 import { buildingAliasNames } from '@/data/buildings';
 import { useTheme } from '@/hooks/use-theme';
+import { useWideLayout } from '@/hooks/use-wide-layout';
 import { hasIndoorData, useCampusGraph } from '@/routing/campus-graph';
 import { buildingFloors, floorLabel } from '@/routing/floors';
 import { findRoomNode } from '@/routing/rooms';
@@ -50,6 +51,7 @@ type PoiInfoSheetProps = {
 // close". (A black backdrop in light mode used to let map labels bleed through, like a broken screen.)
 export function PoiInfoSheet({ poi, onClose, onSetDestination, actionLabel, outdoorOnly }: PoiInfoSheetProps) {
   const theme = useTheme();
+  const wide = useWideLayout();
   return (
     <Modal visible={poi !== null} transparent animationType="slide" onRequestClose={onClose}>
       {/* Gestures inside a Modal need their own root on native (the indoor map pans and pinches). */}
@@ -57,6 +59,7 @@ export function PoiInfoSheet({ poi, onClose, onSetDestination, actionLabel, outd
         <Pressable accessibilityLabel="Close" style={[StyleSheet.absoluteFill, { backgroundColor: withOpacity(theme.background, BACKDROP_OPACITY) }]} onPress={onClose} />
         {/* Keyed by building, so its floor and picked room start fresh for each one. */}
         {poi ? (
+          <View pointerEvents="box-none" style={[styles.frame, wide && styles.frameWide]}>
           <PoiInfo
             key={poi.id}
             poi={poi}
@@ -64,7 +67,9 @@ export function PoiInfoSheet({ poi, onClose, onSetDestination, actionLabel, outd
             onClose={onClose}
             actionLabel={actionLabel}
             outdoorOnly={outdoorOnly}
+            wide={wide}
           />
+          </View>
         ) : null}
       </GestureHandlerRootView>
     </Modal>
@@ -77,7 +82,11 @@ function PoiInfo({
   onClose,
   actionLabel = 'Set as destination',
   outdoorOnly = false,
-}: Pick<PoiInfoSheetProps, 'onSetDestination' | 'onClose' | 'actionLabel' | 'outdoorOnly'> & { poi: PointOfInterest }) {
+  wide,
+}: Pick<PoiInfoSheetProps, 'onSetDestination' | 'onClose' | 'actionLabel' | 'outdoorOnly'> & {
+  poi: PointOfInterest;
+  wide: boolean;
+}) {
   const hasInside = !outdoorOnly && hasIndoorData(poi.id);
   const aliasNames = buildingAliasNames(poi.id);
   const dragY = useSharedValue(0);
@@ -185,7 +194,7 @@ function PoiInfo({
       <Animated.View style={dragStyle}>
       <ThemedView
         type="backgroundElement"
-        style={[styles.sheet, report && { maxHeight: screenHeight * REPORT_SHEET_FRACTION }]}>
+        style={[styles.sheet, wide && styles.sheetWide, report && { maxHeight: screenHeight * REPORT_SHEET_FRACTION }]}>
         <ScrollView
           style={styles.sheetScroll}
           contentContainerStyle={styles.sheetBody}
@@ -355,6 +364,9 @@ const REPORT_SHEET_FRACTION = 0.4;
 
 const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: 'flex-end' },
+  frame: { flex: 1, justifyContent: 'flex-end' },
+  // Wide window: the card and sheet as one centered column, clear of every edge.
+  frameWide: { width: '100%', maxWidth: 960, alignSelf: 'center', paddingVertical: Spacing.four },
   previewArea: { flex: 1 },
   // One card for Outside and Inside, so toggling doesn't change its size.
   card: {
@@ -375,6 +387,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: Spacing.four,
     overflow: 'hidden',
   },
+  sheetWide: { marginHorizontal: Spacing.three, borderRadius: Spacing.four },
   sheetScroll: { flexGrow: 0 },
   sheetBody: { padding: Spacing.four, gap: Spacing.two },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
@@ -382,7 +395,7 @@ const styles = StyleSheet.create({
   // Outside, Inside and the destination on one row; wraps only on a very narrow screen.
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, marginTop: Spacing.one },
   outline: {
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderRadius: 18,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.one + 2,

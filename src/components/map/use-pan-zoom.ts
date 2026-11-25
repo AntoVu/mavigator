@@ -1,12 +1,16 @@
+import { useEffect, useRef } from 'react';
+import { Platform, type View } from 'react-native';
 import { Gesture } from 'react-native-gesture-handler';
 import { useAnimatedStyle, useSharedValue, withDecay, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { computeFocalZoom, getMaxTranslate } from '@/components/map/map-geometry';
+import { computeFocalZoom, getMaxTranslate, wheelZoomFactor } from '@/components/map/map-geometry';
 import type { MapTransform } from '@/components/map/map-viewport';
 
 /** How long animateTransform's glide takes. */
 const FLY_MS = 600;
+/** A zoom button's step: quick, since it answers a click. */
+const STEP_MS = 200;
 /**
  * Letting go mid-swipe keeps the map moving and slows it to a stop, as Apple and Google Maps do.
  * Slower releases than this stop dead, so careful positioning stays put. Deceleration is
@@ -26,6 +30,8 @@ type PanZoomOptions = {
   maxScale?: number;
   /** Pixels the drawing may be dragged past its edge; 0 when left out (see getMaxTranslate). */
   panSlack?: number;
+  /** Where the drawing starts; scale 1, centered when left out. */
+  initialTransform?: MapTransform;
   /** Called on the JS thread when a pan or pinch starts, and with where it ended. */
   onGestureStart: () => void;
   onGestureEnd: (scale: number, translateX: number, translateY: number) => void;
@@ -45,12 +51,13 @@ export function usePanZoom({
   minScale,
   maxScale,
   panSlack = 0,
+  initialTransform,
   onGestureStart,
   onGestureEnd,
 }: PanZoomOptions) {
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
-  const scale = useSharedValue(1);
+  const translateX = useSharedValue(initialTransform?.translateX ?? 0);
+  const translateY = useSharedValue(initialTransform?.translateY ?? 0);
+  const scale = useSharedValue(initialTransform?.scale ?? 1);
   const savedTranslateX = useSharedValue(0);
   const savedTranslateY = useSharedValue(0);
   const savedScale = useSharedValue(1);
@@ -194,9 +201,9 @@ export function usePanZoom({
    * Glides to a pan/zoom (a search flying to a building), then calls `onDone` on the JS thread. It
    * also runs when a finger or a jump cuts the glide short, so whatever was waiting still happens.
    */
-  const animateTransform = (next: MapTransform, onDone: () => void) => {
+  const animateTransform = (next: MapTransform, onDone: () => void, duration = FLY_MS) => {
     endGlide();
-    const timing = { duration: FLY_MS };
+    const timing = { duration };
     savedScale.value = next.scale;
     savedTranslateX.value = next.translateX;
     savedTranslateY.value = next.translateY;
@@ -213,5 +220,59 @@ export function usePanZoom({
     ],
   }));
 
-  return { panGesture, pinchGesture, animatedStyle, applyTransform, animateTransform, scale, translateX, translateY };
+  /**
+   * Desktop zoom on web: the mouse wheel, or a trackpad pinch (which browsers send as a wheel with
+   * ctrlKey), zooms about the cursor. Pass wheelRef to the map's static container View (the same box
+   * the gestures use), not the moving map. One listener is added on mount and calls the latest
+   * handler, so it always sees the current size (react-native-web drops a ref callback's cleanup,
+   * which piled up stale listeners). Last in the hook so react-hooks/immutability allows the
+   * writes above it. Not passive, so preventDefault keeps the page and the
+   * browser's own ctrl+wheel zoom out of it.
+   */
+  const wheelRef = useRef<View>(null);
+  const handleWheel = useRef<(event: WheelEvent) => void>(() => {});
+  // The pan/zoom after zooming by `factor` about a container point, within the limits.
+  const zoomedAbout = (factor: number, x: number, y: number) =>
+    computeFocalZoom({
+      savedScale: scale.value,
+      savedTranslateX: translateX.value,
+      savedTranslateY: translateY.value,
+      startFocalX: x,
+      startFocalY: y,
+      focalX: x,
+      focalY: y,
+      pinchScale: factor,
+      baseWidth,
+      baseHeight,
+      containerWidth,
+      containerHeight,
+      minScale,
+      maxScale,
+      panSlack,
+    });
+  useEffect(() => {
+    handleWheel.current = (event) => {
+      event.preventDefault();
+      const rect = (wheelRef.current as unknown as HTMLElement).getBoundingClientRect();
+      onGestureStart();
+      applyTransform(zoomedAbout(wheelZoomFactor(event.deltaY, event.deltaMode, event.ctrlKey), event.clientX - rect.left, event.clientY - rect.top));
+      onGestureEnd(scale.value, translateX.value, translateY.value);
+    };
+  });
+  useEffect(() => {
+    const element = wheelRef.current as unknown as HTMLElement | null;
+    if (Platform.OS !== 'web' || !element) return;
+    const onWheel = (event: WheelEvent) => handleWheel.current(event);
+    element.addEventListener('wheel', onWheel, { passive: false });
+    return () => element.removeEventListener('wheel', onWheel);
+  }, []);
+
+  /** Glides in (factor > 1) or out about the middle of the view: the zoom buttons. */
+  const zoomBy = (factor: number) =>
+    animateTransform(zoomedAbout(factor, containerWidth / 2, containerHeight / 2), () =>
+      onGestureEnd(scale.value, translateX.value, translateY.value),
+      STEP_MS
+    );
+
+  return { panGesture, pinchGesture, animatedStyle, applyTransform, animateTransform, wheelRef, zoomBy, scale, translateX, translateY };
 }

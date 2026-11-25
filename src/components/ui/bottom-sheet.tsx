@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
+import { useWideLayout } from '@/hooks/use-wide-layout';
 
 type BottomSheetProps = {
   visible: boolean;
@@ -17,6 +18,7 @@ type BottomSheetProps = {
 // Add Class and the Parking tab's permit picker so both feel the same. Rendered in-tree rather
 // than in a Modal, so it can sit over a tab screen without fighting the native tab bar.
 export function BottomSheet({ visible, title, onClose, children }: BottomSheetProps) {
+  const wide = useWideLayout();
   // Android doesn't inset a ScrollView for the keyboard; iOS does it itself via
   // automaticallyAdjustKeyboardInsets below.
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -36,15 +38,15 @@ export function BottomSheet({ visible, title, onClose, children }: BottomSheetPr
   if (!visible) return null;
 
   return (
-    <View style={styles.overlay}>
+    <View style={[styles.overlay, wide && styles.overlayWide]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Close modal"
         style={styles.backdrop}
         onPress={onClose}
       />
-      <SafeAreaView style={styles.sheetContainer} edges={['bottom']}>
-        <ThemedView type="background" style={styles.sheet}>
+      <SafeAreaView style={[styles.sheetContainer, wide && styles.dialogContainer]} edges={['bottom']}>
+        <ThemedView type="background" style={[styles.sheet, wide && styles.dialog]}>
           <View style={styles.header}>
             <ThemedText type="subtitle">{title}</ThemedText>
             <Pressable
@@ -81,6 +83,7 @@ const styles = StyleSheet.create({
     zIndex: 1000,
     justifyContent: 'flex-end',
   },
+  overlayWide: { justifyContent: 'center', alignItems: 'center' },
   backdrop: {
     ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -89,6 +92,9 @@ const styles = StyleSheet.create({
     width: '100%',
     maxHeight: '90%',
   },
+  // Wide window: a dialog in the middle instead of a sheet along the bottom.
+  dialogContainer: { maxWidth: 560, maxHeight: '85%' },
+  dialog: { borderRadius: 20 },
   sheet: {
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,

@@ -65,7 +65,7 @@ export function IndoorMapView({
   const [tapGuard] = useState(createTapGuard);
 
   // The viewBox matches the container's shape, so at 1x the drawing exactly fills it.
-  const { panGesture, pinchGesture, animatedStyle, applyTransform, scale, translateX, translateY } = usePanZoom({
+  const { panGesture, pinchGesture, animatedStyle, applyTransform, wheelRef, scale, translateX, translateY } = usePanZoom({
     baseWidth: width,
     baseHeight: height,
     containerWidth: width,
@@ -113,6 +113,7 @@ export function IndoorMapView({
 
   return (
     <View
+      ref={wheelRef}
       // The panel's color is on this fixed frame, not the drawing, so panning moves only the floor plan.
       style={[styles.container, { backgroundColor: theme.backgroundElement }]}
       onLayout={(event) => {
