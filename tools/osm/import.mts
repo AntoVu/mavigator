@@ -102,8 +102,6 @@ const WALKWAY_SIMPLIFY_METERS = 2.5;
  * from. Widening this is what makes "every drawn place is routable" true by construction.
  */
 const WALKWAY_BUFFER_METERS = NEARBY_APARTMENT_METERS;
-/** Streets are decoration only, so they may run a little further out than the graph does. */
-const STREET_BUFFER_METERS = 160;
 
 /** Streets whose names the map shows: OSM's main road classes, plus Nedderman Drive, campus's own street. */
 const MAJOR_HIGHWAYS = new Set(['primary', 'secondary', 'tertiary']);
@@ -561,49 +559,6 @@ async function main() {
     `import type { CampusLot } from '@/types/map';\n\n${BANNER}\nexport const CAMPUS_LOTS: CampusLot[] = [\n${lots.join('\n')}\n];\n`
   );
 
-  // ---- roads -> streets (visual only) ----
-  const takenStreetIds = new Set<string>();
-  const streets: string[] = [];
-  const digitizerStreets: object[] = [];
-  const emitStreet = (idBase: string, name: string, line: Coordinate[], major = false) => {
-    const id = uniqueId(idBase, takenStreetIds);
-    const path = simplifyPath(line, SIMPLIFY_METERS);
-    drawn.push(...line);
-    digitizerStreets.push({ name, path: path.map(round6Point) });
-    streets.push(
-      [
-        '  {',
-        `    id: '${id}',`,
-        `    name: ${fmtString(name)},`,
-        ...(major ? ['    major: true,'] : []),
-        '    path: [',
-        fmtPath(path, '      '),
-        '    ],',
-        '  },',
-      ].join('\n')
-    );
-  };
-
-  for (const way of roads) {
-    if (!way.geometry || way.geometry.length < 2) continue;
-    // Same clipping reason as the walkways: keep the stretch that runs past campus, not the
-    // whole road out to the county line.
-    const line = way.geometry
-      .map(toCoordinate)
-      .filter((point) => distanceToPolygonMeters(point, campusRing) <= STREET_BUFFER_METERS);
-    if (line.length < 2) continue;
-
-    const name = (way.tags?.name ?? '').trim();
-    const major = MAJOR_HIGHWAYS.has(way.tags?.highway ?? '') || MAJOR_STREET_NAMES.has(name);
-    emitStreet(`street-${slugify(name)}`, name, line, major);
-  }
-  for (const street of traced.streets) emitStreet(street.idBase, street.name, street.path);
-
-  await writeFile(
-    path.join(DATA_DIR, 'campus-streets.ts'),
-    `import type { CampusStreet } from '@/types/map';\n\n${BANNER}\nexport const CAMPUS_STREETS: CampusStreet[] = [\n${streets.join('\n')}\n];\n`
-  );
-
   // ---- walkways -> routing graph ----
   const nodeCoordinates = new Map<number, Coordinate>();
   const walkwayWays: OsmWay[] = [];
@@ -830,26 +785,77 @@ async function main() {
   );
 
   // ---- extent ----
+  // OSM streets are left out: they are clipped to this box below, so they run off the map's edge.
   const everyPoint: Coordinate[] = [
     ...drawn,
+    ...traced.streets.flatMap((street) => street.path),
     ...graph.nodes.map((n) => n.coordinate),
     ...campusRing,
   ];
-  const extent = {
-    minLat: Math.min(...everyPoint.map((c) => c.lat)),
-    maxLat: Math.max(...everyPoint.map((c) => c.lat)),
-    minLng: Math.min(...everyPoint.map((c) => c.lng)),
-    maxLng: Math.max(...everyPoint.map((c) => c.lng)),
-  };
   const latMargin = EXTENT_MARGIN_METERS / 111_320;
-  const lngMargin = latMargin / Math.cos((((extent.minLat + extent.maxLat) / 2) * Math.PI) / 180);
+  const lngMargin =
+    latMargin / Math.cos(((Math.min(...everyPoint.map((c) => c.lat)) + Math.max(...everyPoint.map((c) => c.lat))) / 2) * (Math.PI / 180));
+  const extent = {
+    minLat: round6(Math.min(...everyPoint.map((c) => c.lat)) - latMargin),
+    maxLat: round6(Math.max(...everyPoint.map((c) => c.lat)) + latMargin),
+    minLng: round6(Math.min(...everyPoint.map((c) => c.lng)) - lngMargin),
+    maxLng: round6(Math.max(...everyPoint.map((c) => c.lng)) + lngMargin),
+  };
   await writeFile(
     path.join(DATA_DIR, 'campus-extent.ts'),
     `${BANNER}\n/** Bounding box of everything drawn, plus ${EXTENT_MARGIN_METERS} m of room. */\nexport const CAMPUS_EXTENT = {\n` +
-      `  minLat: ${round6(extent.minLat - latMargin)},\n` +
-      `  maxLat: ${round6(extent.maxLat + latMargin)},\n` +
-      `  minLng: ${round6(extent.minLng - lngMargin)},\n` +
-      `  maxLng: ${round6(extent.maxLng + lngMargin)},\n} as const;\n`
+      `  minLat: ${extent.minLat},\n` +
+      `  maxLat: ${extent.maxLat},\n` +
+      `  minLng: ${extent.minLng},\n` +
+      `  maxLng: ${extent.maxLng},\n} as const;\n`
+  );
+
+  // ---- roads -> streets (visual only) ----
+  const takenStreetIds = new Set<string>();
+  const streets: string[] = [];
+  const digitizerStreets: object[] = [];
+  const emitStreet = (idBase: string, name: string, line: Coordinate[], major = false) => {
+    const id = uniqueId(idBase, takenStreetIds);
+    const path = simplifyPath(line, SIMPLIFY_METERS);
+    digitizerStreets.push({ name, path: path.map(round6Point) });
+    streets.push(
+      [
+        '  {',
+        `    id: '${id}',`,
+        `    name: ${fmtString(name)},`,
+        ...(major ? ['    major: true,'] : []),
+        '    path: [',
+        fmtPath(path, '      '),
+        '    ],',
+        '  },',
+      ].join('\n')
+    );
+  };
+
+  const inExtent = (c: Coordinate) =>
+    c.lat >= extent.minLat && c.lat <= extent.maxLat && c.lng >= extent.minLng && c.lng <= extent.maxLng;
+  for (const way of roads) {
+    if (!way.geometry || way.geometry.length < 2) continue;
+    // Clipped to the map's box (keeping one point past it, so the road runs off the edge), not the
+    // whole road out to the county line. A road that leaves and comes back becomes two pieces.
+    const points = way.geometry.map(toCoordinate);
+    const keep = points.map((_, i) => [i - 1, i, i + 1].some((j) => points[j] !== undefined && inExtent(points[j])));
+    const pieces: Coordinate[][] = [];
+    points.forEach((point, i) => {
+      if (!keep[i]) return;
+      if (i === 0 || !keep[i - 1]) pieces.push([]);
+      pieces[pieces.length - 1].push(point);
+    });
+
+    const name = (way.tags?.name ?? '').trim();
+    const major = MAJOR_HIGHWAYS.has(way.tags?.highway ?? '') || MAJOR_STREET_NAMES.has(name);
+    for (const line of pieces) if (line.length >= 2) emitStreet(`street-${slugify(name)}`, name, line, major);
+  }
+  for (const street of traced.streets) emitStreet(street.idBase, street.name, street.path);
+
+  await writeFile(
+    path.join(DATA_DIR, 'campus-streets.ts'),
+    `import type { CampusStreet } from '@/types/map';\n\n${BANNER}\nexport const CAMPUS_STREETS: CampusStreet[] = [\n${streets.join('\n')}\n];\n`
   );
 
   // ---- digitizer base ----
