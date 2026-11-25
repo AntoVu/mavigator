@@ -7,6 +7,7 @@ export const PARKING_PERMIT_GROUPS = [
   { title: 'Resident', permits: ['Resident West', 'Resident East', 'Resident South', 'Resident Dual'] },
   { title: 'Short-term and visitor', permits: ['Student Short-Term', 'Visitor', 'Visitor Garage'] },
   { title: 'Employee', permits: ['Faculty/Staff'] },
+  { title: 'Motorcycle', permits: ['Motorcycle'] },
 ] as const;
 
 export type ParkingPermit = (typeof PARKING_PERMIT_GROUPS)[number]['permits'][number];
@@ -24,6 +25,7 @@ export const PARKING_PERMIT_DESCRIPTIONS: Partial<Record<ParkingPermit, string>>
   'Student Short-Term': '1-, 7- or 30-day student lot permit',
   Visitor: 'Student lots: 1-day, 7-day, 30-day, semester or annual',
   'Visitor Garage': 'One day in West Campus, Maverick or College Park South Garage',
+  Motorcycle: 'Motorcycle stalls only',
 };
 
 // "None" = the user has no permit; getParkingPermission treats that as null.
@@ -121,6 +123,14 @@ export const PARKING_LOT_IDS = {
   centennialCourt: 'lot-centennial-court',
   heightsOnPecan: 'lot-heights-on-pecan',
   kcResidentStrip: 'lot-kc-resident-strip',
+  // Motorcycle stalls, from UTA's Parking Finder (Modii) motorcycle layer, 2026-11-23.
+  motorcycleMeadowRun: 'lot-motorcycle-meadow-run',
+  motorcycleF8: 'lot-motorcycle-f8',
+  motorcycleF9: 'lot-motorcycle-f9',
+  motorcycleTrimbleHall: 'lot-motorcycle-trimble-hall',
+  motorcycleEngineeringLab: 'lot-motorcycle-engineering-lab',
+  motorcycleF38: 'lot-motorcycle-f38',
+  motorcycleMaverickHall: 'lot-motorcycle-maverick-hall',
 } as const;
 
 export type ParkingPermission = 'allowed' | 'restricted' | 'timeRestricted';
@@ -139,7 +149,8 @@ type LotKind =
   | 'residentEast'
   | 'residentSouth'
   // The three garages the one-day visitor garage permit names.
-  | 'visitorGarage';
+  | 'visitorGarage'
+  | 'motorcycle';
 
 const L = PARKING_LOT_IDS;
 
@@ -198,6 +209,13 @@ const LOT_KINDS: Record<string, readonly LotKind[]> = {
   [L.centennialCourt]: ['residentSouth'],
   [L.heightsOnPecan]: ['residentSouth'],
   [L.kcResidentStrip]: ['residentEast'],
+  [L.motorcycleMeadowRun]: ['motorcycle'],
+  [L.motorcycleF8]: ['motorcycle'],
+  [L.motorcycleF9]: ['motorcycle'],
+  [L.motorcycleTrimbleHall]: ['motorcycle'],
+  [L.motorcycleEngineeringLab]: ['motorcycle'],
+  [L.motorcycleF38]: ['motorcycle'],
+  [L.motorcycleMaverickHall]: ['motorcycle'],
 };
 
 const COMMUTER_KINDS: readonly LotKind[] = ['westCommuter', 'eastCommuter', 'southCommuter'];
@@ -222,6 +240,7 @@ const PERMIT_KINDS: Record<ParkingPermit, readonly LotKind[]> = {
   Visitor: [...COMMUTER_KINDS],
   'Visitor Garage': ['visitorGarage'],
   'Faculty/Staff': ['faculty', 'reducedRate', 'remote'],
+  Motorcycle: ['motorcycle'],
 };
 
 // Weekday daytime only: lots a pass gets later in the day, and from what hour.
@@ -234,18 +253,20 @@ const OPENS_LATER: Partial<Record<ParkingPermit, { kinds: readonly LotKind[]; ho
 };
 
 // Lots that stay closed after hours to anyone without their own pass: Maverick Garage's preferred
-// floors, and the apartment lots of Resident South (gray in the Parking Finder even on Sundays).
+// floors, the apartment lots of Resident South (gray in the Parking Finder even on Sundays), and
+// motorcycle stalls, which no car may use.
 // A lot closes only if all its kinds are here, so the commuter garages that also take the visitor
 // garage permit stay open.
-const NEVER_AFTER_HOURS: readonly LotKind[] = ['maverickGarage', 'visitorGarage', 'residentSouth'];
+const NEVER_AFTER_HOURS: readonly LotKind[] = ['maverickGarage', 'visitorGarage', 'residentSouth', 'motorcycle'];
 
 const DAY_STARTS_AT_HOUR = 7;
 const AFTER_HOURS_START_HOUR = 19;
-// Visitor student-lot permits may use any surface lot from 5 PM.
-const VISITOR_AFTER_HOURS_START_HOUR = 17;
+// Visitor student-lot permits may use any surface lot from 5 PM; so may motorcycles (PATS lists no
+// later time for them).
+const EARLY_AFTER_HOURS_START_HOUR = 17;
 
 function afterHoursStart(permit: ParkingPermit): number {
-  return permit === 'Visitor' ? VISITOR_AFTER_HOURS_START_HOUR : AFTER_HOURS_START_HOUR;
+  return permit === 'Visitor' || permit === 'Motorcycle' ? EARLY_AFTER_HOURS_START_HOUR : AFTER_HOURS_START_HOUR;
 }
 
 function isWeekend(date: Date): boolean {
@@ -253,7 +274,7 @@ function isWeekend(date: Date): boolean {
   return day === 0 || day === 6;
 }
 
-// Weekends, and weekdays before 7 AM and from 7 PM (5 PM for visitors).
+// Weekends, and weekdays before 7 AM and from 7 PM (5 PM for visitors and motorcycles).
 function isAfterHours(permit: ParkingPermit, date: Date): boolean {
   const hour = date.getHours();
   return isWeekend(date) || hour < DAY_STARTS_AT_HOUR || hour >= afterHoursStart(permit);
@@ -279,6 +300,11 @@ function opensLaterAt(permit: ParkingPermit, kinds: readonly LotKind[]): number 
  */
 export function hasParkingRule(lotId: string): boolean {
   return Object.prototype.hasOwnProperty.call(LOT_KINDS, lotId);
+}
+
+/** A motorcycle stall: a few meters across, so the map marks it with a dot instead of a name. */
+export function isMotorcycleStall(lotId: string): boolean {
+  return LOT_KINDS[lotId]?.includes('motorcycle') ?? false;
 }
 
 /**

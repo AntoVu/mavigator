@@ -195,7 +195,7 @@ Anthony, once back on campus (week of 11/16/26):
 
 | Done | Task |
 |:---:|---|
-| ☐ | Motorcycle permit: motorcycle stalls only. Needs the stalls on the map first (the PATS maps mark them with a motorcycle icon). Out of scope for Iteration 4. |
+| ☑ | Motorcycle permit: motorcycle stalls only on weekdays, any commuter, staff or general lot from 5 PM and on weekends. **Done 2026-11-23** on `feature/motorcycle-parking`: the 10 stalls from the Parking Finder's motorcycle layer, as 7 lots drawn as dots. Check them on the walk. |
 | ☐ | Finish tracing buildings: the cleanup pass on the 30 left in section 1, plus Josue's 4 still unreviewed (SWSH, Vandergriff, College Park Center, SH). |
 | ☐ | Verify buildings in person with the Indoor Validation tool, including ERB floor 6 and GACB. |
 | ☐ | Mark restrooms on the walk: 27 of the 50 buildings have none in their data (2026-11-14). Their diagrams show restroom icons but not men or women, so they were left as numbered rooms. Each one marked becomes routable ("nearest restroom") on the next import. Maybe add an "unknown" restroom kind for ones that can't be told apart. |
