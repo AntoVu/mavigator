@@ -30,6 +30,8 @@ type PanZoomOptions = {
   maxScale?: number;
   /** Pixels the drawing may be dragged past its edge; 0 when left out (see getMaxTranslate). */
   panSlack?: number;
+  /** Where the drawing starts; scale 1, centered when left out. */
+  initialTransform?: MapTransform;
   /** Called on the JS thread when a pan or pinch starts, and with where it ended. */
   onGestureStart: () => void;
   onGestureEnd: (scale: number, translateX: number, translateY: number) => void;
@@ -49,12 +51,13 @@ export function usePanZoom({
   minScale,
   maxScale,
   panSlack = 0,
+  initialTransform,
   onGestureStart,
   onGestureEnd,
 }: PanZoomOptions) {
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
-  const scale = useSharedValue(1);
+  const translateX = useSharedValue(initialTransform?.translateX ?? 0);
+  const translateY = useSharedValue(initialTransform?.translateY ?? 0);
+  const scale = useSharedValue(initialTransform?.scale ?? 1);
   const savedTranslateX = useSharedValue(0);
   const savedTranslateY = useSharedValue(0);
   const savedScale = useSharedValue(1);

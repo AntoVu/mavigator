@@ -1,6 +1,6 @@
 import { useIsFocused } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useEffect, useLayoutEffect, useState } from 'react';
+import { Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
 import Svg, { Circle, G, Rect, Text as SvgText } from 'react-native-svg';
@@ -86,6 +86,9 @@ type CampusMapViewProps = {
 // Coordinates stay real-world-shaped ({ lat, lng }) so a later engine swap doesn't mean
 // re-authoring the data. Shared by the Map and Parking tabs: extend the props rather than
 // copying this, so a fix lands in both.
+/** The last real size a campus map measured; see containerSize. */
+let lastContainerSize: { width: number; height: number } | null = null;
+
 export function CampusMapView({
   pois,
   onSelectPoi,
@@ -106,10 +109,23 @@ export function CampusMapView({
   const endColor = (id: string) =>
     id === routeEnds?.destination ? ROUTE_COLORS.destination : id === routeEnds?.start ? ROUTE_COLORS.start : undefined;
   const { width: windowWidth } = useWindowDimensions();
-  const [containerSize, setContainerSize] = useState({ width: windowWidth, height: windowWidth });
-  // containerSize starts as a guess; the shared view must not be decided from it.
-  const [hasLayout, setHasLayout] = useState(false);
+  // A new map starts at the last map's size (both tabs' maps fill the same area) and the shared view,
+  // so its first paint is already lined up: a freshly mounted map can't be moved before that paint.
+  // The very first map starts from a guess; the shared view must not be decided from it.
+  const [containerSize, setContainerSize] = useState(() => lastContainerSize ?? { width: windowWidth, height: windowWidth });
+  const [hasLayout, setHasLayout] = useState(lastContainerSize !== null);
+  const [initialTransform] = useState(() => {
+    const viewport = mapViewportStore.get();
+    return viewport && lastContainerSize ? transformFromViewport(viewport, lastContainerSize) : undefined;
+  });
   const baseSize = getCoverSize(containerSize);
+  // A hidden tab lays out at 0x0; keeping the last real size lets it reopen already lined up.
+  const setLayout = (width: number, height: number) => {
+    if (width <= 0 || height <= 0) return;
+    lastContainerSize = { width, height };
+    setContainerSize((size) => (size.width === width && size.height === height ? size : { width, height }));
+    setHasLayout(true);
+  };
   // Plain numbers (not the objects above) so the gesture worklets capture
   // simple values: see getMaxTranslate().
   const baseWidth = baseSize.width;
@@ -155,6 +171,7 @@ export function CampusMapView({
       baseHeight,
       containerWidth,
       containerHeight,
+      initialTransform,
       onGestureStart: tapGuard.gestureStarted,
       onGestureEnd: handleGestureEnd,
     });
@@ -199,7 +216,17 @@ export function CampusMapView({
   // react-hooks/immutability rejects writing a shared value in a gesture
   // callback if an earlier effect used it.
   const isFocused = useIsFocused();
-  useEffect(() => {
+  // On web, onLayout arrives after the browser paints, so a tab switch showed a frame or more of
+  // the old view before the shared one. Measuring here (and applying below in a layout effect)
+  // lines the map up before the first paint.
+  useLayoutEffect(() => {
+    const element = wheelRef.current as unknown as HTMLElement | null;
+    if (Platform.OS !== 'web' || !isFocused || !element) return;
+    const { width, height } = element.getBoundingClientRect();
+    if (width > 0 && height > 0) setLayout(width, height);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFocused]);
+  useLayoutEffect(() => {
     if (!isFocused || !hasLayout) {
       return;
     }
@@ -230,11 +257,7 @@ export function CampusMapView({
       ref={wheelRef}
       // The map's own color past its edge too, so zooming out doesn't show a frame around campus.
       style={[styles.container, { backgroundColor: theme.backgroundElement }]}
-      onLayout={(event) => {
-        const { width, height } = event.nativeEvent.layout;
-        setContainerSize({ width, height });
-        setHasLayout(true);
-      }}>
+      onLayout={(event) => setLayout(event.nativeEvent.layout.width, event.nativeEvent.layout.height)}>
       {/* The detector wraps a static full-size view, with the moving map
           inside it, so gesture coordinates (focalX/Y) are container-space
           rather than the transformed map's local space. */}
