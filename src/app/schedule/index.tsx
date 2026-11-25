@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   addPlaceholder: {
     minHeight: 64,
     borderRadius: Spacing.three,
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',

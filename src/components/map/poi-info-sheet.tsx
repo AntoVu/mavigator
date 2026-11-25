@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
   // Outside, Inside and the destination on one row; wraps only on a very narrow screen.
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, marginTop: Spacing.one },
   outline: {
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderRadius: 18,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.one + 2,
