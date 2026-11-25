@@ -163,6 +163,8 @@ export function CampusMapView({
   // building press, so finishing a pan with a pause does not also drop one.
   const handleLongPress = (x: number, y: number) => {
     if (tapGuard.shouldSuppressPress()) return;
+    // Held like a gesture until release, so the press that follows doesn't also open a building.
+    tapGuard.gestureStarted();
     onLongPressCoordinate?.(unprojectPoint({ x, y }));
   };
 
@@ -182,6 +184,9 @@ export function CampusMapView({
         containerHeight,
       });
       scheduleOnRN(handleLongPress, point.x, point.y);
+    })
+    .onEnd(() => {
+      scheduleOnRN(tapGuard.gestureEnded);
     });
 
   const composedGesture = onLongPressCoordinate
@@ -240,6 +245,9 @@ export function CampusMapView({
               "100%"/slice: see getCoverSize()'s comment for why that's what
               makes the cropped edges of the campus reachable by panning. */}
           <Svg
+            // An <svg> may shrink in a flex box: a wide window squeezed its height, drawing the campus
+            // smaller than the gesture math assumes (pins landed toward the middle).
+            style={{ flexShrink: 0 }}
             width={baseSize.width}
             height={baseSize.height}
             viewBox={`0 0 ${CAMPUS_VIEWBOX.width} ${CAMPUS_VIEWBOX.height}`}>
