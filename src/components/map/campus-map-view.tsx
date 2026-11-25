@@ -172,6 +172,8 @@ export function CampusMapView({
       containerWidth,
       containerHeight,
       initialTransform,
+      // Zoomed all the way out, the whole map just fits: further only shrinks campus into the middle.
+      minScale: Math.min(containerWidth / baseWidth, containerHeight / baseHeight),
       onGestureStart: tapGuard.gestureStarted,
       onGestureEnd: handleGestureEnd,
     });

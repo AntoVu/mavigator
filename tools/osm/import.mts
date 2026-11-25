@@ -108,6 +108,8 @@ const STREET_BUFFER_METERS = 160;
 /** Streets whose names the map shows: OSM's main road classes, plus Nedderman Drive, campus's own street. */
 const MAJOR_HIGHWAYS = new Set(['primary', 'secondary', 'tertiary']);
 const MAJOR_STREET_NAMES = new Set(['West Nedderman Drive', 'South Nedderman Drive']);
+/** Room around everything drawn, so campus doesn't sit hard against the map's edge. */
+const EXTENT_MARGIN_METERS = 300;
 /** Widen the query box past the campus edge so buffered apartments are included. */
 const QUERY_PADDING_DEGREES = 0.006;
 /**
@@ -839,14 +841,15 @@ async function main() {
     minLng: Math.min(...everyPoint.map((c) => c.lng)),
     maxLng: Math.max(...everyPoint.map((c) => c.lng)),
   };
-  const margin = 0.0008;
+  const latMargin = EXTENT_MARGIN_METERS / 111_320;
+  const lngMargin = latMargin / Math.cos((((extent.minLat + extent.maxLat) / 2) * Math.PI) / 180);
   await writeFile(
     path.join(DATA_DIR, 'campus-extent.ts'),
-    `${BANNER}\n/** Bounding box of everything drawn, plus a small margin. */\nexport const CAMPUS_EXTENT = {\n` +
-      `  minLat: ${round6(extent.minLat - margin)},\n` +
-      `  maxLat: ${round6(extent.maxLat + margin)},\n` +
-      `  minLng: ${round6(extent.minLng - margin)},\n` +
-      `  maxLng: ${round6(extent.maxLng + margin)},\n} as const;\n`
+    `${BANNER}\n/** Bounding box of everything drawn, plus ${EXTENT_MARGIN_METERS} m of room. */\nexport const CAMPUS_EXTENT = {\n` +
+      `  minLat: ${round6(extent.minLat - latMargin)},\n` +
+      `  maxLat: ${round6(extent.maxLat + latMargin)},\n` +
+      `  minLng: ${round6(extent.minLng - lngMargin)},\n` +
+      `  maxLng: ${round6(extent.maxLng + lngMargin)},\n} as const;\n`
   );
 
   // ---- digitizer base ----

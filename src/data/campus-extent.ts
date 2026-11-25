@@ -5,10 +5,10 @@
  * Geometry (c) OpenStreetMap contributors, made available under the Open Database
  * License (ODbL). https://www.openstreetmap.org/copyright
  */
-/** Bounding box of everything drawn, plus a small margin. */
+/** Bounding box of everything drawn, plus 300 m of room. */
 export const CAMPUS_EXTENT = {
-  minLat: 32.719577,
-  maxLat: 32.740145,
-  minLng: -97.134207,
-  maxLng: -97.102746,
+  minLat: 32.717682,
+  maxLat: 32.74204,
+  minLng: -97.13661,
+  maxLng: -97.100343,
 } as const;
